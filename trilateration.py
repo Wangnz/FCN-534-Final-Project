@@ -2,6 +2,7 @@ import numpy as np
 import time
 import math
 from accesspoint import AccessPoint
+from wifisignal import WifiSignalParse
 
 
 # --------------------------------------------------------------------------------------------------------------------
@@ -13,7 +14,7 @@ class Trilateration:
 
     def get_estimated_distance(self, transmit_power, rssi):
         k = -27.55
-        freq = 5200.0  # doesn't matter as long as consistent to get_transmit_power()'s frequency value
+        freq = 5200.0  # doesn't matter as long as it is consistent to get_transmit_power()'s frequency value
         dist = 10 ** ((transmit_power - rssi - k - 20.0 * math.log10(freq)) / 20.0)
 
         return dist
@@ -91,59 +92,97 @@ def estimate_transmit_power():
     return transmit_power
 
 
+def get_pos_with_group(ap_list, target_group, target_bssid):
+    res = -1
+    for ap in ap_list.keys():
+        if ap == target_group:
+            for data in ap_list[ap]:
+                if data.bssid == target_bssid:
+                    res = data.pos
+                    break
+        if res != -1:
+            break
+    return res
+
+
 # GET THE MAC ADDRESS AGAIN!# GET THE MAC ADDRESS AGAIN!# GET THE MAC ADDRESS AGAIN!# GET THE MAC ADDRESS AGAIN!
 # GET THE MAC ADDRESS AGAIN!# GET THE MAC ADDRESS AGAIN!# GET THE MAC ADDRESS AGAIN!# GET THE MAC ADDRESS AGAIN!
 # GET THE MAC ADDRESS AGAIN!# GET THE MAC ADDRESS AGAIN!# GET THE MAC ADDRESS AGAIN!# GET THE MAC ADDRESS AGAIN!
 # GET THE MAC ADDRESS AGAIN!# GET THE MAC ADDRESS AGAIN!# GET THE MAC ADDRESS AGAIN!# GET THE MAC ADDRESS AGAIN!
 if __name__ == "__main__":
+    # Initializing ------------------------------------------------------------------------------------------
+
+    # CHECK IF TRANSMIT POWER DIFFERS BY EACH ROUTER IN NCS BUILDING!!!!!!!!!
     # get transmit power
-    etp = estimate_transmit_power()
+    ptx = estimate_transmit_power()
 
     # order: 2.4GHz * 3 , 5.0GHz * 3 (top-bottom / each router)
     AP_list = {
-        'H1': [AccessPoint('7A:E0', 2.4, (0, 0), etp), AccessPoint('7A:E1', 2.4, (0, 0), etp),
-               AccessPoint('7A:E3', 2.4, (0, 0), etp), AccessPoint('7A:F0', 5.0, (0, 0), etp),
-               AccessPoint('7A:F1', 5.0, (0, 0), etp), AccessPoint('7A:F3', 5.0, (0, 0), etp)],
+        'H1': [AccessPoint('7A:E0', 2.4, (0, 0), ptx), AccessPoint('7A:E1', 2.4, (0, 0), ptx),
+               AccessPoint('7A:E3', 2.4, (0, 0), ptx), AccessPoint('7A:F0', 5.0, (0, 0), ptx),
+               AccessPoint('7A:F1', 5.0, (0, 0), ptx), AccessPoint('7A:F3', 5.0, (0, 0), ptx)],
 
-        'H2': [AccessPoint('77:00', 2.4, (0, 0), etp), AccessPoint('77:01', 2.4, (0, 0), etp),
-               AccessPoint('77:03', 2.4, (0, 0), etp), AccessPoint('77:10', 5.0, (0, 0), etp),
-               AccessPoint('77:11', 5.0, (0, 0), etp), AccessPoint('77:13', 5.0, (0, 0), etp)],
+        'H2': [AccessPoint('77:00', 2.4, (0, 0), ptx), AccessPoint('77:01', 2.4, (0, 0), ptx),
+               AccessPoint('77:03', 2.4, (0, 0), ptx), AccessPoint('77:10', 5.0, (0, 0), ptx),
+               AccessPoint('77:11', 5.0, (0, 0), ptx), AccessPoint('77:13', 5.0, (0, 0), ptx)],
 
-        'H3': [AccessPoint('FC:80', 2.4, (0, 0), etp), AccessPoint('FC:82', 2.4, (0, 0), etp),
-               AccessPoint('FC:83', 2.4, (0, 0), etp), AccessPoint('FC:90', 5.0, (0, 0), etp),
-               AccessPoint('FC:92', 5.0, (0, 0), etp), AccessPoint('FC:93', 5.0, (0, 0), etp)],
+        'H3': [AccessPoint('FC:80', 2.4, (0, 0), ptx), AccessPoint('FC:82', 2.4, (0, 0), ptx),
+               AccessPoint('FC:83', 2.4, (0, 0), ptx), AccessPoint('FC:90', 5.0, (0, 0), ptx),
+               AccessPoint('FC:92', 5.0, (0, 0), ptx), AccessPoint('FC:93', 5.0, (0, 0), ptx)],
 
-        'H4': [AccessPoint(':60', 2.4, (0, 0), etp), AccessPoint(':61', 2.4, (0, 0), etp),
-               AccessPoint(':63', 2.4, (0, 0), etp), AccessPoint(':70', 5.0, (0, 0), etp),
-               AccessPoint(':71', 5.0, (0, 0), etp), AccessPoint(':73', 5.0, (0, 0), etp)],
+        'H4': [AccessPoint(':60', 2.4, (0, 0), ptx), AccessPoint(':61', 2.4, (0, 0), ptx),
+               AccessPoint(':63', 2.4, (0, 0), ptx), AccessPoint(':70', 5.0, (0, 0), ptx),
+               AccessPoint(':71', 5.0, (0, 0), ptx), AccessPoint(':73', 5.0, (0, 0), ptx)],
         # GET THE MAC ADDRESS AGAIN!
         # GET THE MAC ADDRESS AGAIN!# GET THE MAC ADDRESS AGAIN!# GET THE MAC ADDRESS AGAIN!
         # GET THE MAC ADDRESS AGAIN!# GET THE MAC ADDRESS AGAIN!# GET THE MAC ADDRESS AGAIN!
         # GET THE MAC ADDRESS AGAIN!# GET THE MAC ADDRESS AGAIN!# GET THE MAC ADDRESS AGAIN!
 
-        'P1': [AccessPoint('7A:C0', 2.4, (0, 0), etp), AccessPoint('7A:C1', 2.4, (0, 0), etp),
-               AccessPoint('7A:C3', 2.4, (0, 0), etp), AccessPoint('7A:D0', 5.0, (0, 0), etp),
-               AccessPoint('7A:D1', 5.0, (0, 0), etp), AccessPoint('7A:D3', 5.0, (0, 0), etp)],
+        'P1': [AccessPoint('7A:C0', 2.4, (0, 0), ptx), AccessPoint('7A:C1', 2.4, (0, 0), ptx),
+               AccessPoint('7A:C3', 2.4, (0, 0), ptx), AccessPoint('7A:D0', 5.0, (0, 0), ptx),
+               AccessPoint('7A:D1', 5.0, (0, 0), ptx), AccessPoint('7A:D3', 5.0, (0, 0), ptx)],
 
-        'P2': [AccessPoint('7B:A0', 2.4, (0, 0), etp), AccessPoint('7B:A1', 2.4, (0, 0), etp),
-               AccessPoint('7B:A3', 2.4, (0, 0), etp), AccessPoint('7B:B0', 5.0, (0, 0), etp),
-               AccessPoint('7B:B1', 5.0, (0, 0), etp), AccessPoint('7B:B3', 5.0, (0, 0), etp)],
+        'P2': [AccessPoint('7B:A0', 2.4, (0, 0), ptx), AccessPoint('7B:A1', 2.4, (0, 0), ptx),
+               AccessPoint('7B:A3', 2.4, (0, 0), ptx), AccessPoint('7B:B0', 5.0, (0, 0), ptx),
+               AccessPoint('7B:B1', 5.0, (0, 0), ptx), AccessPoint('7B:B3', 5.0, (0, 0), ptx)],
 
-        'L1': [AccessPoint('85:E0', 2.4, (0, 0), etp), AccessPoint('85:E2', 2.4, (0, 0), etp),
-               AccessPoint('85:E3', 2.4, (0, 0), etp), AccessPoint('85:F0', 5.0, (0, 0), etp),
-               AccessPoint('85:F2', 5.0, (0, 0), etp), AccessPoint('85:F3', 5.0, (0, 0), etp)],
+        'L1': [AccessPoint('85:E0', 2.4, (0, 0), ptx), AccessPoint('85:E2', 2.4, (0, 0), ptx),
+               AccessPoint('85:E3', 2.4, (0, 0), ptx), AccessPoint('85:F0', 5.0, (0, 0), ptx),
+               AccessPoint('85:F2', 5.0, (0, 0), ptx), AccessPoint('85:F3', 5.0, (0, 0), ptx)],
 
-        'L2': [AccessPoint('7C:00', 2.4, (0, 0), etp), AccessPoint('7C:01', 2.4, (0, 0), etp),
-               AccessPoint('7C:03', 2.4, (0, 0), etp), AccessPoint('7C:10', 5.0, (0, 0), etp),
-               AccessPoint('7C:11', 5.0, (0, 0), etp), AccessPoint('7C:13', 5.0, (0, 0), etp)],
+        'L2': [AccessPoint('7C:00', 2.4, (0, 0), ptx), AccessPoint('7C:01', 2.4, (0, 0), ptx),
+               AccessPoint('7C:03', 2.4, (0, 0), ptx), AccessPoint('7C:10', 5.0, (0, 0), ptx),
+               AccessPoint('7C:11', 5.0, (0, 0), ptx), AccessPoint('7C:13', 5.0, (0, 0), ptx)],
 
-        'S1': [AccessPoint('85:A0', 2.4, (0, 0), etp), AccessPoint('85:A1', 2.4, (0, 0), etp),
-               AccessPoint('85:A3', 2.4, (0, 0), etp), AccessPoint('85:B0', 5.0, (0, 0), etp),
-               AccessPoint('85:B1', 5.0, (0, 0), etp), AccessPoint('85:B3', 5.0, (0, 0), etp)],
+        'S1': [AccessPoint('85:A0', 2.4, (0, 0), ptx), AccessPoint('85:A1', 2.4, (0, 0), ptx),
+               AccessPoint('85:A3', 2.4, (0, 0), ptx), AccessPoint('85:B0', 5.0, (0, 0), ptx),
+               AccessPoint('85:B1', 5.0, (0, 0), ptx), AccessPoint('85:B3', 5.0, (0, 0), ptx)],
 
-        'S2': [AccessPoint('E1:60', 2.4, (0, 0), etp), AccessPoint('E1:62', 2.4, (0, 0), etp),
-               AccessPoint('E1:63', 2.4, (0, 0), etp), AccessPoint('E1:70', 5.0, (0, 0), etp),
-               AccessPoint('E1:72', 5.0, (0, 0), etp), AccessPoint('E1:73', 5.0, (0, 0), etp)]
-    }
+        'S2': [AccessPoint('E1:60', 2.4, (0, 0), ptx), AccessPoint('E1:62', 2.4, (0, 0), ptx),
+               AccessPoint('E1:63', 2.4, (0, 0), ptx), AccessPoint('E1:70', 5.0, (0, 0), ptx),
+               AccessPoint('E1:72', 5.0, (0, 0), ptx), AccessPoint('E1:73', 5.0, (0, 0), ptx)]}
+    trilateration = Trilateration()
 
-    print AP_list['H1'][0].bssid
+    # -------------------------------------------------------------------------------------------------------
+
+    while True:
+        # Receive data from the device (JSON + PARSE + SAVE TO LOCAL VARIABLES)
+        wifi_data = WifiSignalParse()  # pase the device's all the near wifi data
+        wifi_data.receive_data()
+        wifi_data.find_dominant_signal(3)  # 3 most strongest wifi signals
+
+        data = {}
+        current_ap_list = []
+        for ap in wifi_data.strongest_signal_list:
+            data['dist'] = trilateration.get_estimated_distance(ptx, ap.rssi)
+            position = get_pos_with_group(AP_list, ap.group, ap.bssid)
+            if position == -1:
+                print('Wi-fi not found')
+                break
+            data['x'] = position.x
+            data['y'] = position.y
+            current_ap_list.append(data)
+
+        x_coord, y_coord = trilateration.get_position(current_ap_list)
+        print(x_coord, y_coord)
+        break  # for testing purpose

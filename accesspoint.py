@@ -4,7 +4,7 @@ from coordinate import Coordinate2D
 # For AP information data
 class AccessPoint:
 
-    def __init__(self, bssid, freq, pos, transmit_power=-999.0):
+    def __init__(self, bssid, freq, pos, transmit_power):
         self.ssid = ''
         self.bssid = bssid
         self.freq = freq
