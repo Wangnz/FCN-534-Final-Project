@@ -56,6 +56,8 @@ class Trilateration:
 
         At = np.transpose(A)
         tmp = np.matmul(At, A)
+        print 'A: \n', A
+        print 'At: \n', At
         res1 = np.linalg.inv(tmp)
         res2 = np.matmul(At, B)
 
@@ -92,25 +94,27 @@ def estimate_transmit_power():
     return transmit_power
 
 
-def get_pos_with_group(ap_list, target_group, target_bssid):
-    res = -1
-    for ap in ap_list.keys():
-        if ap == target_group:
-            for data in ap_list[ap]:
-                if data.bssid == target_bssid:
-                    res = data.pos
-                    break
-        if res != -1:
+def get_pos_with_group(ap_list, target_bssid):
+    coord = -1
+    for data in ap_list:
+        if target_bssid.endswith(data.bssid):
+            coord = data.pos
             break
-    return res
+
+    return coord
 
 
 # GET THE MAC ADDRESS AGAIN!# GET THE MAC ADDRESS AGAIN!# GET THE MAC ADDRESS AGAIN!# GET THE MAC ADDRESS AGAIN!
 # GET THE MAC ADDRESS AGAIN!# GET THE MAC ADDRESS AGAIN!# GET THE MAC ADDRESS AGAIN!# GET THE MAC ADDRESS AGAIN!
 # GET THE MAC ADDRESS AGAIN!# GET THE MAC ADDRESS AGAIN!# GET THE MAC ADDRESS AGAIN!# GET THE MAC ADDRESS AGAIN!
 # GET THE MAC ADDRESS AGAIN!# GET THE MAC ADDRESS AGAIN!# GET THE MAC ADDRESS AGAIN!# GET THE MAC ADDRESS AGAIN!
+
+
+def calc_dist(p1, p2):
+    return math.sqrt((p1[0] - p2[0]) ** 2 + (p1[1] - p2[1]) ** 2)
+
+
 if __name__ == "__main__":
-    # Initializing ------------------------------------------------------------------------------------------
 
     # CHECK IF TRANSMIT POWER DIFFERS BY EACH ROUTER IN NCS BUILDING!!!!!!!!!
     # get transmit power
@@ -118,7 +122,7 @@ if __name__ == "__main__":
 
     # order: 2.4GHz * 3 , 5.0GHz * 3 (top-bottom / each router)
     AP_list = {
-        'H1': [AccessPoint('7A:E0', 2.4, (0, 0), ptx), AccessPoint('7A:E1', 2.4, (0, 0), ptx),
+        'H1': [AccessPoint('7A:E0', 2.4, (0, -550), ptx), AccessPoint('7A:E1', 2.4, (0, 0), ptx),
                AccessPoint('7A:E3', 2.4, (0, 0), ptx), AccessPoint('7A:F0', 5.0, (0, 0), ptx),
                AccessPoint('7A:F1', 5.0, (0, 0), ptx), AccessPoint('7A:F3', 5.0, (0, 0), ptx)],
 
@@ -126,7 +130,7 @@ if __name__ == "__main__":
                AccessPoint('77:03', 2.4, (0, 0), ptx), AccessPoint('77:10', 5.0, (0, 0), ptx),
                AccessPoint('77:11', 5.0, (0, 0), ptx), AccessPoint('77:13', 5.0, (0, 0), ptx)],
 
-        'H3': [AccessPoint('FC:80', 2.4, (0, 0), ptx), AccessPoint('FC:82', 2.4, (0, 0), ptx),
+        'H3': [AccessPoint('FC:80', 2.4, (0, 800), ptx), AccessPoint('FC:82', 2.4, (0, 0), ptx),
                AccessPoint('FC:83', 2.4, (0, 0), ptx), AccessPoint('FC:90', 5.0, (0, 0), ptx),
                AccessPoint('FC:92', 5.0, (0, 0), ptx), AccessPoint('FC:93', 5.0, (0, 0), ptx)],
 
@@ -163,26 +167,28 @@ if __name__ == "__main__":
                AccessPoint('E1:72', 5.0, (0, 0), ptx), AccessPoint('E1:73', 5.0, (0, 0), ptx)]}
     trilateration = Trilateration()
 
-    # -------------------------------------------------------------------------------------------------------
-
     while True:
         # Receive data from the device (JSON + PARSE + SAVE TO LOCAL VARIABLES)
         wifi_data = WifiSignalParse()  # pase the device's all the near wifi data
         wifi_data.receive_data()
         wifi_data.find_dominant_signal(3)  # 3 most strongest wifi signals
 
-        data = {}
-        current_ap_list = []
+        ap_list_of_interest = []
         for ap in wifi_data.strongest_signal_list:
+            data = {}
             data['dist'] = trilateration.get_estimated_distance(ptx, ap.rssi)
-            position = get_pos_with_group(AP_list, ap.group, ap.bssid)
+            position = get_pos_with_group(AP_list[ap.group], ap.bssid)
             if position == -1:
                 print('Wi-fi not found')
                 break
             data['x'] = position.x
             data['y'] = position.y
-            current_ap_list.append(data)
+            ap_list_of_interest.append(data)
 
-        x_coord, y_coord = trilateration.get_position(current_ap_list)
-        print(x_coord, y_coord)
+        ap_list_of_interest = [{'dist': 2, 'x': 1.1, 'y': 2}, {'dist': 2, 'x': 0, 'y': 0},
+                               {'dist': 3, 'x': -1.1, 'y': -2}]
+
+        print "LIST: ", ap_list_of_interest
+        x_coord, y_coord = trilateration.get_position(ap_list_of_interest)
+        print('result : %.4f, %.4f' %(x_coord, y_coord))
         break  # for testing purpose
