@@ -32,6 +32,7 @@ class WifiSignalParse:
     def __init__(self):
         self.signal_list = []
         self.strongest_signal_list = []
+        self.anchor_signal = None
 
     @property
     def strongest_signal_list(self):
@@ -41,6 +42,10 @@ class WifiSignalParse:
     def signal_list(self):
         return self.signal_list
 
+    @property
+    def anchor_signal(self):  # the most strongest signal (highest RSSI)
+        return self.anchor_signal
+
     # JSON, PARSING
     def receive_data(self):
         # for each data : loop
@@ -49,8 +54,10 @@ class WifiSignalParse:
 
     # getting the 'num_of_groups' number of dominant signals
     def find_dominant_signal(self, num_of_groups):
-        # initialize strongest_signal_list
-        self.strongest_signal_list.append(Signal('Wolfie', '7A:E0', -35, 'H1'))
+        # initialize strongest_signal_list : !!!!!!!!!!!!!THIS ONE DOES NOT INCLUDE ANCHOR SIGNAL!!!!!!!!!!!!!
+        self.strongest_signal_list.append(Signal('Wolfie', '7A:E0', -65, 'H1'))
         self.strongest_signal_list.append(Signal('Wolfie', '77:00', -50, 'H2'))
-        self.strongest_signal_list.append(Signal('Wolfie', 'FC:80', -60, 'H3'))
+
+        # the most strongest signal
+        self.anchor_signal = Signal('Wolfie', 'FC:80', -45, 'H3')
         pass

@@ -12,65 +12,124 @@ class Trilateration:
     def __init__(self):
         pass
 
-    def get_estimated_distance(self, transmit_power, rssi):
-        k = -27.55
-        freq = 5200.0  # doesn't matter as long as it is consistent to get_transmit_power()'s frequency value
-        dist = 10 ** ((transmit_power - rssi - k - 20.0 * math.log10(freq)) / 20.0)
+    def line(self, p1, p2):
+        A = (p1[1] - p2[1])
+        B = (p2[0] - p1[0])
+        C = (p1[0] * p2[1] - p2[0] * p1[1])
+        return A, B, -C
 
-        return dist
+    def intersection(self, L1, L2):
+        D = L1[0] * L2[1] - L1[1] * L2[0]
+        Dx = L1[2] * L2[1] - L1[1] * L2[2]
+        Dy = L1[0] * L2[2] - L1[2] * L2[0]
+        if D != 0:
+            x = Dx / D
+            y = Dy / D
+            return x, y
+        else:
+            return False
 
-    # param: type=list, each element type=dict, content=[dist, x coord, y coord]
-    def intersection_matrix(self, ap_list):
-        ap_matrix_list_A = []
-        ap_matrix_list_B = []
-        ap_cnt = len(ap_list)
+    # Euclidean distance
+    def calc_dist(self, p1, p2):
+        return math.sqrt((p1[0] - p2[0]) ** 2 + (p1[1] - p2[1]) ** 2)
 
-        # Xn's AP
-        Xn = ap_list[ap_cnt - 1]['x']
-        Yn = ap_list[ap_cnt - 1]['y']
-        Rn = ap_list[ap_cnt - 1]['dist']  # radius
-        # print Xn, Yn, Rn
-        for i in xrange(ap_cnt - 1):  # for(i: 1 ~ n-1): Xi - Xn (e.g. X1-Xn , X2-Xn)
-            Xi = ap_list[i]['x']
-            Yi = ap_list[i]['y']
-            Ri = ap_list[i]['dist']  # radius
+    # Average three points(center1,2, & centroid of intersection point)
+    def calc_avg_pos(self, center_point_1_x, center_point_1_y, center_point_2_x, center_point_2_y, intersection_point_x,
+                     intersection_point_y):
+        return ((center_point_1_x + center_point_2_x + intersection_point_x) / 3,
+                (center_point_1_y + center_point_2_y + intersection_point_y) / 3)
 
-            # AX = B : (x1^2 - xn^2 -2(x1-xn)x +y1^2 -yn^2 -2(y1-yn)y = r1^2 - rn^2
-            A = 2 * np.array([Xi - Xn, Yi - Yn])
-            B = np.array([(Xi ** 2) - (Xn ** 2) + (Yi ** 2) - (Yn ** 2) - (Ri ** 2) + (Rn ** 2)])
-            ap_matrix_list_A.append(A)
-            ap_matrix_list_B.append(B)
+    # param : ap1, ar2 = data dictionary
+    def ap_circle_condition_check(self, ap1, ap2):
+        dist = self.calc_dist((ap1['x'], ap1['y']), (ap2['x'], ap2['y']))  # distance of the two circles
+        radius_1 = ap1['dist']  # AP_1's radius
+        radius_2 = ap2['dist']  # AP_2 's radius
 
-        matrix_A = np.reshape(ap_matrix_list_A, (-1, 2)).astype(np.float32)
-        matrix_B = np.reshape(ap_matrix_list_B, (-1, 1)).astype(np.float32)
-        return matrix_A, matrix_B
+        # inner circle check(one circle is inside the other)
+        if dist < abs(radius_1 - radius_2):
+            print('Inner circle')
+            if radius_1 > radius_2:
+                return 0, (ap2['x'], ap2['y'])
+            else:
+                return 0, (ap1['x'], ap1['y'])
 
-    # Get the centroid of all the circles
-    def trilaterate(self, matrix_list_A, matrix_list_B):
-        # Non-linear least square : X = [(A^t * A)^-1]*[A^t * B]
-        # However!! we can just calculate the distance from each center of circles
-        # setting the estimating position as (x,y),
-        # and get the most equal(=fair or least square) distance from each circle's center points
-        A = matrix_list_A
-        B = matrix_list_B
+        # if radius_1 > dist or radius_2 > dist: # partial inner
+        #     return False
 
-        At = np.transpose(A)
-        tmp = np.matmul(At, A)
-        print 'A: \n', A
-        print 'At: \n', At
-        res1 = np.linalg.inv(tmp)
-        res2 = np.matmul(At, B)
+        # separate circle check
+        if dist > radius_1 + radius_2:
+            print('Seperate circle')
+            return -1, -1
 
-        estimated_position = np.matmul(res1, res2)
+        # complete coincide circle check
+        if dist == 0 and radius_1 == radius_2:
+            print('Coincide circle')
+            return 0, (ap1['x'], ap1['y'])
 
-        return estimated_position
+        return 1, -1
 
-    # Get the user's current location
-    def get_position(self, ap_list):
-        matrix_A, matrix_B = self.intersection_matrix(ap_list)
-        estimated_position_x, estimated_position_y = self.trilaterate(matrix_A, matrix_B).ravel()
+    # param : ap1, ar2 = data dictionary
+    def get_intersecting_points(self, ap1, ap2):
+        dist = self.calc_dist((ap1['x'], ap1['y']), (ap2['x'], ap2['y']))  # distance of the two circles
+        radius_1 = ap1['dist']  # AP_1's radius
+        radius_2 = ap2['dist']  # AP_2 's radius
 
-        return estimated_position_x, estimated_position_y
+        sub_x = ap2['x'] - ap1['x']
+        sub_y = ap2['y'] - ap1['y']
+        tmp = (radius_1 * radius_1 - radius_2 * radius_2 + dist * dist) / (2 * dist)
+        tmp_2 = math.sqrt(radius_1 * radius_1 - tmp * tmp)
+        xm = ap1['x'] + tmp * sub_x / dist
+        ym = ap1['y'] + tmp * sub_y / dist
+        pt_x1 = xm + tmp_2 * sub_y / dist
+        pt_x2 = xm - tmp_2 * sub_y / dist
+        pt_y1 = ym - tmp_2 * sub_x / dist
+        pt_y2 = ym + tmp_2 * sub_x / dist
+
+        return (pt_x1, pt_y1), (pt_x2, pt_y2)
+
+    # param: anchor_ap (AP that has the most strong RSSI signal / the circle that is to be compared with every other circls)
+    # param: ap_list (target APs that are going to be searched)
+    def get_position_votes(self, anchor_ap, ap_list):
+        estimated_position_votes = []
+        for target_ap in ap_list:
+            (ap_check, ap_check_res) = self.ap_circle_condition_check(anchor_ap, target_ap)
+            if ap_check == -1:
+                print("the circle does not qualify : skip checking")
+                continue
+            else:
+                intersection_centroid = (-99999.0, -99999.0)
+                final_centroid = (-99999.0, -99999.0)
+                if ap_check == 0:
+                    final_centroid = ap_check_res
+                else:
+                    intersect_point_1, intersect_point_2 = self.get_intersecting_points(anchor_ap, target_ap)
+                    ap_center_line = self.line((anchor_ap['x'], anchor_ap['y']), (target_ap['x'], target_ap['y']))
+                    intersect_point_line = self.line(intersect_point_1, intersect_point_2)
+
+                    # intersecting in only one point
+                    if intersect_point_1 == intersect_point_2:
+                        intersection_centroid = intersect_point_1
+                        if anchor_ap['dist'] > target_ap['dist']:
+                            final_centroid = (target_ap['x'], target_ap['y'])
+                        else:
+                            final_centroid = (anchor_ap['x'], anchor_ap['y'])
+                    else:
+                        intersection_centroid = self.intersection(ap_center_line, intersect_point_line)
+                        final_centroid = self.calc_avg_pos(anchor_ap['x'], anchor_ap['y'], target_ap['x'],
+                                                           target_ap['y'], intersection_centroid[0],
+                                                           intersection_centroid[1])
+                if final_centroid != (-99999.0, -99999.0):
+                    estimated_position_votes.append(final_centroid)
+
+        return estimated_position_votes
+
+
+def get_estimated_distance(transmit_power, rssi):
+    k = -27.55
+    freq = 5200.0  # doesn't matter as long as it is consistent to get_transmit_power()'s frequency value
+    dist = 10 ** ((transmit_power - rssi - k - 20.0 * math.log10(freq)) / 20.0)
+
+    return dist
 
 
 def estimate_transmit_power():
@@ -104,14 +163,23 @@ def get_pos_with_group(ap_list, target_bssid):
     return coord
 
 
-# GET THE MAC ADDRESS AGAIN!# GET THE MAC ADDRESS AGAIN!# GET THE MAC ADDRESS AGAIN!# GET THE MAC ADDRESS AGAIN!
-# GET THE MAC ADDRESS AGAIN!# GET THE MAC ADDRESS AGAIN!# GET THE MAC ADDRESS AGAIN!# GET THE MAC ADDRESS AGAIN!
-# GET THE MAC ADDRESS AGAIN!# GET THE MAC ADDRESS AGAIN!# GET THE MAC ADDRESS AGAIN!# GET THE MAC ADDRESS AGAIN!
-# GET THE MAC ADDRESS AGAIN!# GET THE MAC ADDRESS AGAIN!# GET THE MAC ADDRESS AGAIN!# GET THE MAC ADDRESS AGAIN!
+def get_pos_data(AP_list, ptx, ap):
+    data = {}
+    data['dist'] = get_estimated_distance(ptx, ap.rssi)
+    position = get_pos_with_group(AP_list[ap.group], ap.bssid)
+    if position == -1:
+        print('Such WiFi signal not found')
+        return None
+    data['x'] = position.x
+    data['y'] = position.y
+
+    return data
 
 
-def calc_dist(p1, p2):
-    return math.sqrt((p1[0] - p2[0]) ** 2 + (p1[1] - p2[1]) ** 2)
+# GET THE MAC ADDRESS AGAIN!# GET THE MAC ADDRESS AGAIN!# GET THE MAC ADDRESS AGAIN!# GET THE MAC ADDRESS AGAIN!
+# GET THE MAC ADDRESS AGAIN!# GET THE MAC ADDRESS AGAIN!# GET THE MAC ADDRESS AGAIN!# GET THE MAC ADDRESS AGAIN!
+# GET THE MAC ADDRESS AGAIN!# GET THE MAC ADDRESS AGAIN!# GET THE MAC ADDRESS AGAIN!# GET THE MAC ADDRESS AGAIN!
+# GET THE MAC ADDRESS AGAIN!# GET THE MAC ADDRESS AGAIN!# GET THE MAC ADDRESS AGAIN!# GET THE MAC ADDRESS AGAIN!
 
 
 if __name__ == "__main__":
@@ -122,7 +190,7 @@ if __name__ == "__main__":
 
     # order: 2.4GHz * 3 , 5.0GHz * 3 (top-bottom / each router)
     AP_list = {
-        'H1': [AccessPoint('7A:E0', 2.4, (0, -550), ptx), AccessPoint('7A:E1', 2.4, (0, 0), ptx),
+        'H1': [AccessPoint('7A:E0', 2.4, (0, -10), ptx), AccessPoint('7A:E1', 2.4, (0, 0), ptx),
                AccessPoint('7A:E3', 2.4, (0, 0), ptx), AccessPoint('7A:F0', 5.0, (0, 0), ptx),
                AccessPoint('7A:F1', 5.0, (0, 0), ptx), AccessPoint('7A:F3', 5.0, (0, 0), ptx)],
 
@@ -130,7 +198,7 @@ if __name__ == "__main__":
                AccessPoint('77:03', 2.4, (0, 0), ptx), AccessPoint('77:10', 5.0, (0, 0), ptx),
                AccessPoint('77:11', 5.0, (0, 0), ptx), AccessPoint('77:13', 5.0, (0, 0), ptx)],
 
-        'H3': [AccessPoint('FC:80', 2.4, (0, 800), ptx), AccessPoint('FC:82', 2.4, (0, 0), ptx),
+        'H3': [AccessPoint('FC:80', 2.4, (0, 10), ptx), AccessPoint('FC:82', 2.4, (0, 0), ptx),
                AccessPoint('FC:83', 2.4, (0, 0), ptx), AccessPoint('FC:90', 5.0, (0, 0), ptx),
                AccessPoint('FC:92', 5.0, (0, 0), ptx), AccessPoint('FC:93', 5.0, (0, 0), ptx)],
 
@@ -172,23 +240,20 @@ if __name__ == "__main__":
         wifi_data = WifiSignalParse()  # pase the device's all the near wifi data
         wifi_data.receive_data()
         wifi_data.find_dominant_signal(3)  # 3 most strongest wifi signals
+        anchor_signal = wifi_data.anchor_signal
 
-        ap_list_of_interest = []
+        APs_signal_pos_data = []
+        anchor_signal_pos_data = get_pos_data(AP_list, ptx, anchor_signal)
         for ap in wifi_data.strongest_signal_list:
-            data = {}
-            data['dist'] = trilateration.get_estimated_distance(ptx, ap.rssi)
-            position = get_pos_with_group(AP_list[ap.group], ap.bssid)
-            if position == -1:
-                print('Wi-fi not found')
-                break
-            data['x'] = position.x
-            data['y'] = position.y
-            ap_list_of_interest.append(data)
+            data = get_pos_data(AP_list, ptx, ap)
+            if data is not None:
+                APs_signal_pos_data.append(data)
 
-        ap_list_of_interest = [{'dist': 2, 'x': 1.1, 'y': 2}, {'dist': 2, 'x': 0, 'y': 0},
-                               {'dist': 3, 'x': -1.1, 'y': -2}]
+        estimated_position_votes = trilateration.get_position_votes(anchor_signal_pos_data, APs_signal_pos_data)
 
-        print "LIST: ", ap_list_of_interest
-        x_coord, y_coord = trilateration.get_position(ap_list_of_interest)
-        print('result : %.4f, %.4f' %(x_coord, y_coord))
+        print("Anchor : ", anchor_signal_pos_data)
+        print("APs : ", APs_signal_pos_data)
+        print("Result : ", estimated_position_votes)
+        # x_coord, y_coord = trilateration.get_position(APs_signal_pos_data)
+        # print("Result : %.4f, %.4f" % (x_coord, y_coord))
         break  # for testing purpose
