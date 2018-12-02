@@ -3,37 +3,6 @@ import numpy as np
 import subprocess
 
 
-class Signal:
-    def __init__(self, ssid='', bssid='', rssi=-999):
-        self.ssid = ssid
-        self.bssid = bssid
-        self.rssi = rssi
-        self.group = ''
-
-    @property
-    def ssid(self):
-        return self.ssid
-
-    @property
-    def bssid(self):
-        return self.bssid
-
-    @property
-    def rssi(self):
-        return self.rssi
-
-    @property
-    def group(self):
-        return self.group
-
-
-def SignalSort(x, y, z):
-    signals = [Signal(ssid, bssid, rssi) for (ssid, bssid, rssi) in [(x, y, z)]]
-    signals.sort(cmp=None, key=lambda x: x.rssi, reverse=False)
-    for element in signals:
-        print element.ssid, ":", element.bssid, ":", element.rssi
-
-
 def get_access_points():
     cmd = "/System/Library/PrivateFrameworks/Apple80211.framework/Versions/A/Resources/airport -s"
     proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
