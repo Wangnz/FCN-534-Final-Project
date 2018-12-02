@@ -1,2 +1,3 @@
 # FCN-534-Final-Project
-FCN 534 Final Project of Indoor Localization Based on Trilateration Algorithm
+Fundamentals of Computer Networks CSE534 - Final Project
+Indoor Localization Based on Multilateration Algorithm
