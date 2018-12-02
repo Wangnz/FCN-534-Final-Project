@@ -180,7 +180,8 @@ def get_pos_data(AP_list, ptx, ap):
 def get_position(votes):
     mean = np.mean(votes, axis=0)
     std = np.std(votes, axis=0)
-    sigma_factor = 1
+    sigma_factor = 2
+    # sigma_factor = 1
 
     votes_without_outliers = []
 
@@ -260,14 +261,14 @@ if __name__ == "__main__":
 
     while True:
         # Receive data from the device (JSON + PARSE + SAVE TO LOCAL VARIABLES)
-        wifi_data = WifiSignalParse()  # pase the device's all the near wifi data
-        wifi_data.receive_data()
-        wifi_data.find_dominant_signal(3)  # 3 most strongest wifi signals
+        wifi_data = WifiSignalParse()  # parse the device's all the near wifi data
+        wifi_data.receive_data() # get data
+        # wifi_data.find_dominant_signal(3)  # 3 most strongest wifi signals
         anchor_signal = wifi_data.anchor_signal
 
         APs_signal_pos_data = []
         anchor_signal_pos_data = get_pos_data(AP_list, ptx, anchor_signal)
-        for ap in wifi_data.strongest_signal_list:
+        for ap in wifi_data.target_signal_list:
             data = get_pos_data(AP_list, ptx, ap)
             if data is not None:
                 APs_signal_pos_data.append(data)
