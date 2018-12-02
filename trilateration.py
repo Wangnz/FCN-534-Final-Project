@@ -43,11 +43,11 @@ class Trilateration:
     def ap_circle_condition_check(self, ap1, ap2):
         dist = self.calc_dist((ap1['x'], ap1['y']), (ap2['x'], ap2['y']))  # distance of the two circles
         radius_1 = ap1['dist']  # AP_1's radius
-        radius_2 = ap2['dist']  # AP_2 's radius
+        radius_2 = ap2['dist']  # AP_2's radius
 
         # inner circle check(one circle is inside the other)
         if dist < abs(radius_1 - radius_2):
-            print('Inner circle')
+            # print('Inner circle')
             if radius_1 > radius_2:
                 return 0, (ap2['x'], ap2['y'])
             else:
@@ -58,12 +58,13 @@ class Trilateration:
 
         # separate circle check
         if dist > radius_1 + radius_2:
-            print('Seperate circle')
+            # print('Seperate circle')
             return -1, -1
+            # return 0, ((ap1['x'] + ap2['x']) / 2.0, (ap1['y'] + ap2['y']) / 2.0)
 
         # complete coincide circle check
         if dist == 0 and radius_1 == radius_2:
-            print('Coincide circle')
+            # print('Coincide circle')
             return 0, (ap1['x'], ap1['y'])
 
         return 1, -1
@@ -87,14 +88,16 @@ class Trilateration:
 
         return (pt_x1, pt_y1), (pt_x2, pt_y2)
 
-    # param: anchor_ap (AP that has the most strong RSSI signal / the circle that is to be compared with every other circls)
+    # param: anchor_ap (AP with the most strong RSSI signal/the circle that is to be compared with every other circles)
     # param: ap_list (target APs that are going to be searched)
     def get_position_votes(self, anchor_ap, ap_list):
+        # give n times more weight on 5.0GHz (more short ranged) | n = frequency_weight
+        frequency_weight = 2
         estimated_position_votes = []
         for target_ap in ap_list:
             (ap_check, ap_check_res) = self.ap_circle_condition_check(anchor_ap, target_ap)
             if ap_check == -1:
-                print("> the circle does not qualify : skip checking")
+                # print("> the circle does not qualify : skip checking")
                 continue
             else:
                 intersection_centroid = (-99999.0, -99999.0)
@@ -120,8 +123,36 @@ class Trilateration:
                                                            intersection_centroid[1])
                 if final_centroid != (-99999.0, -99999.0):
                     estimated_position_votes.append(final_centroid)
+                    if target_ap['freq'] == 5.0:
+                        for i in xrange(frequency_weight - 1):
+                            estimated_position_votes.append(final_centroid)
 
         return estimated_position_votes
+
+    # using normal distribution + standard deviation to remove outliers
+    def get_position(self, votes):
+        mean = np.mean(votes, axis=0)
+        std = np.std(votes, axis=0)
+        sigma_factor = 2
+        # sigma_factor = 1
+
+        votes_without_outliers = []
+
+        for vote_points in votes:
+            x = vote_points[0]
+            y = vote_points[1]
+
+            x_mean = mean[0]
+            y_mean = mean[1]
+            x_std = std[0]
+            y_std = std[1]
+
+            # mean +- sigma <>
+            if x_mean - sigma_factor * x_std <= x and x <= x_mean + sigma_factor * x_std:
+                if y_mean - sigma_factor * y_std <= y and y <= y_mean + sigma_factor * y_std:
+                    votes_without_outliers.append((x, y))
+
+        return np.mean(votes_without_outliers, axis=0)
 
 
 def get_estimated_distance(transmit_power, rssi):
@@ -153,53 +184,31 @@ def estimate_transmit_power():
     return transmit_power
 
 
-def get_pos_with_group(ap_list, target_bssid):
+def get_pos_and_freq_with_group(ap_list, target_bssid):
     coord = -1
+    freq = -1
     for data in ap_list:
         if target_bssid.endswith(data.bssid):
             coord = data.pos
+            freq = data.freq
             break
 
-    return coord
+    return coord, freq
 
 
 def get_pos_data(AP_list, ptx, ap):
     data = {}
     data['dist'] = get_estimated_distance(ptx, ap.rssi)
-    position = get_pos_with_group(AP_list[ap.group], ap.bssid)
+    # print('___', data['dist'], ap.rssi)
+    position, frequency = get_pos_and_freq_with_group(AP_list[ap.group], ap.bssid)
     if position == -1:
         print('Such WiFi signal not found')
         return None
     data['x'] = position.x
     data['y'] = position.y
+    data['freq'] = frequency
 
     return data
-
-
-# using normal distribution + standard deviation to remove outliers
-def get_position(votes):
-    mean = np.mean(votes, axis=0)
-    std = np.std(votes, axis=0)
-    sigma_factor = 2
-    # sigma_factor = 1
-
-    votes_without_outliers = []
-
-    for vote_points in votes:
-        x = vote_points[0]
-        y = vote_points[1]
-
-        x_mean = mean[0]
-        y_mean = mean[1]
-        x_std = std[0]
-        y_std = std[1]
-
-        # mean +- sigma <>
-        if x_mean - sigma_factor * x_std <= x and x <= x_mean + sigma_factor * x_std:
-            if y_mean - sigma_factor * y_std <= y and y <= y_mean + sigma_factor * y_std:
-                votes_without_outliers.append((x, y))
-
-    return np.mean(votes_without_outliers, axis=0)
 
 
 if __name__ == "__main__":
@@ -262,7 +271,7 @@ if __name__ == "__main__":
     while True:
         # Receive data from the device (JSON + PARSE + SAVE TO LOCAL VARIABLES)
         wifi_data = WifiSignalParse()  # parse the device's all the near wifi data
-        wifi_data.receive_data() # get data
+        wifi_data.receive_data()  # get data
         # wifi_data.find_dominant_signal(3)  # 3 most strongest wifi signals
         anchor_signal = wifi_data.anchor_signal
 
@@ -277,6 +286,6 @@ if __name__ == "__main__":
 
         # print("Anchor : ", anchor_signal_pos_data)
         # print("APs : ", APs_signal_pos_data)
-        # print("Result : ", estimated_position_votes)
-        print("Outlier filtered result :", get_position(estimated_position_votes))
+        print("Votes : ", estimated_position_votes)
+        print("Outlier filtered result :", trilateration.get_position(estimated_position_votes))
         break  # for testing purpose
