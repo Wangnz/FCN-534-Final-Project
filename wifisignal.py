@@ -27,7 +27,7 @@ class Signal:
 
 
 # User's perspective
-# For receiving the wifi signal data(probably receives as JSON format)
+# For receiving the wifi signal data (receives as JSON format)
 class WifiSignalParse:
     def __init__(self):
         self.signal_list = []

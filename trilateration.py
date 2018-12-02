@@ -94,7 +94,7 @@ class Trilateration:
         for target_ap in ap_list:
             (ap_check, ap_check_res) = self.ap_circle_condition_check(anchor_ap, target_ap)
             if ap_check == -1:
-                print("the circle does not qualify : skip checking")
+                print("> the circle does not qualify : skip checking")
                 continue
             else:
                 intersection_centroid = (-99999.0, -99999.0)
@@ -176,10 +176,29 @@ def get_pos_data(AP_list, ptx, ap):
     return data
 
 
-# GET THE MAC ADDRESS AGAIN!# GET THE MAC ADDRESS AGAIN!# GET THE MAC ADDRESS AGAIN!# GET THE MAC ADDRESS AGAIN!
-# GET THE MAC ADDRESS AGAIN!# GET THE MAC ADDRESS AGAIN!# GET THE MAC ADDRESS AGAIN!# GET THE MAC ADDRESS AGAIN!
-# GET THE MAC ADDRESS AGAIN!# GET THE MAC ADDRESS AGAIN!# GET THE MAC ADDRESS AGAIN!# GET THE MAC ADDRESS AGAIN!
-# GET THE MAC ADDRESS AGAIN!# GET THE MAC ADDRESS AGAIN!# GET THE MAC ADDRESS AGAIN!# GET THE MAC ADDRESS AGAIN!
+# using normal distribution + standard deviation to remove outliers
+def get_position(votes):
+    mean = np.mean(votes, axis=0)
+    std = np.std(votes, axis=0)
+    sigma_factor = 1
+
+    votes_without_outliers = []
+
+    for vote_points in votes:
+        x = vote_points[0]
+        y = vote_points[1]
+
+        x_mean = mean[0]
+        y_mean = mean[1]
+        x_std = std[0]
+        y_std = std[1]
+
+        # mean +- sigma <>
+        if x_mean - sigma_factor * x_std <= x and x <= x_mean + sigma_factor * x_std:
+            if y_mean - sigma_factor * y_std <= y and y <= y_mean + sigma_factor * y_std:
+                votes_without_outliers.append((x, y))
+
+    return np.mean(votes_without_outliers, axis=0)
 
 
 if __name__ == "__main__":
@@ -190,49 +209,53 @@ if __name__ == "__main__":
 
     # order: 2.4GHz * 3 , 5.0GHz * 3 (top-bottom / each router)
     AP_list = {
-        'H1': [AccessPoint('7A:E0', 2.4, (0, -10), ptx), AccessPoint('7A:E1', 2.4, (0, 0), ptx),
-               AccessPoint('7A:E3', 2.4, (0, 0), ptx), AccessPoint('7A:F0', 5.0, (0, 0), ptx),
-               AccessPoint('7A:F1', 5.0, (0, 0), ptx), AccessPoint('7A:F3', 5.0, (0, 0), ptx)],
+        'H1': [AccessPoint('7A:E0', 2.4, (0.0, 9.1440), ptx), AccessPoint('7A:E1', 2.4, (0.0, 9.1440), ptx),
+               AccessPoint('7A:E3', 2.4, (0.0, 9.1440), ptx), AccessPoint('7A:F0', 5.0, (0.0, 9.1440), ptx),
+               AccessPoint('7A:F1', 5.0, (0.0, 9.1440), ptx), AccessPoint('7A:F3', 5.0, (0.0, 9.1440), ptx)],
 
-        'H2': [AccessPoint('77:00', 2.4, (0, 0), ptx), AccessPoint('77:01', 2.4, (0, 0), ptx),
-               AccessPoint('77:03', 2.4, (0, 0), ptx), AccessPoint('77:10', 5.0, (0, 0), ptx),
-               AccessPoint('77:11', 5.0, (0, 0), ptx), AccessPoint('77:13', 5.0, (0, 0), ptx)],
+        'H2': [AccessPoint('77:00', 2.4, (0.0, 0.0), ptx), AccessPoint('77:01', 2.4, (0.0, 0.0), ptx),
+               AccessPoint('77:03', 2.4, (0.0, 0.0), ptx), AccessPoint('77:10', 5.0, (0.0, 0.0), ptx),
+               AccessPoint('77:11', 5.0, (0.0, 0.0), ptx), AccessPoint('77:13', 5.0, (0.0, 0.0), ptx)],
 
-        'H3': [AccessPoint('FC:80', 2.4, (0, 10), ptx), AccessPoint('FC:82', 2.4, (0, 0), ptx),
-               AccessPoint('FC:83', 2.4, (0, 0), ptx), AccessPoint('FC:90', 5.0, (0, 0), ptx),
-               AccessPoint('FC:92', 5.0, (0, 0), ptx), AccessPoint('FC:93', 5.0, (0, 0), ptx)],
+        'H3': [AccessPoint('FC:80', 2.4, (0.0, -14.6050), ptx), AccessPoint('FC:82', 2.4, (0.0, -14.6050), ptx),
+               AccessPoint('FC:83', 2.4, (0.0, -14.6050), ptx), AccessPoint('FC:90', 5.0, (0.0, -14.6050), ptx),
+               AccessPoint('FC:92', 5.0, (0.0, -14.6050), ptx), AccessPoint('FC:93', 5.0, (0.0, -14.6050), ptx)],
 
-        'H4': [AccessPoint(':60', 2.4, (0, 0), ptx), AccessPoint(':61', 2.4, (0, 0), ptx),
-               AccessPoint(':63', 2.4, (0, 0), ptx), AccessPoint(':70', 5.0, (0, 0), ptx),
-               AccessPoint(':71', 5.0, (0, 0), ptx), AccessPoint(':73', 5.0, (0, 0), ptx)],
-        # GET THE MAC ADDRESS AGAIN!
-        # GET THE MAC ADDRESS AGAIN!# GET THE MAC ADDRESS AGAIN!# GET THE MAC ADDRESS AGAIN!
-        # GET THE MAC ADDRESS AGAIN!# GET THE MAC ADDRESS AGAIN!# GET THE MAC ADDRESS AGAIN!
-        # GET THE MAC ADDRESS AGAIN!# GET THE MAC ADDRESS AGAIN!# GET THE MAC ADDRESS AGAIN!
+        'H4': [AccessPoint('77:60', 2.4, (0.0, -27.4320), ptx), AccessPoint('77:61', 2.4, (0.0, -27.4320), ptx),
+               AccessPoint('77:63', 2.4, (0.0, -27.4320), ptx), AccessPoint('77:70', 5.0, (0.0, -27.4320), ptx),
+               AccessPoint('77:71', 5.0, (0.0, -27.4320), ptx), AccessPoint('77:73', 5.0, (0.0, -27.4320), ptx)],
 
-        'P1': [AccessPoint('7A:C0', 2.4, (0, 0), ptx), AccessPoint('7A:C1', 2.4, (0, 0), ptx),
-               AccessPoint('7A:C3', 2.4, (0, 0), ptx), AccessPoint('7A:D0', 5.0, (0, 0), ptx),
-               AccessPoint('7A:D1', 5.0, (0, 0), ptx), AccessPoint('7A:D3', 5.0, (0, 0), ptx)],
+        'P1': [AccessPoint('7A:C0', 2.4, (21.4884, 21.6662), ptx), AccessPoint('7A:C1', 2.4, (21.4884, 21.6662), ptx),
+               AccessPoint('7A:C3', 2.4, (21.4884, 21.6662), ptx), AccessPoint('7A:D0', 5.0, (21.4884, 21.6662), ptx),
+               AccessPoint('7A:D1', 5.0, (21.4884, 21.6662), ptx), AccessPoint('7A:D3', 5.0, (21.4884, 21.6662), ptx)],
 
-        'P2': [AccessPoint('7B:A0', 2.4, (0, 0), ptx), AccessPoint('7B:A1', 2.4, (0, 0), ptx),
-               AccessPoint('7B:A3', 2.4, (0, 0), ptx), AccessPoint('7B:B0', 5.0, (0, 0), ptx),
-               AccessPoint('7B:B1', 5.0, (0, 0), ptx), AccessPoint('7B:B3', 5.0, (0, 0), ptx)],
+        'P2': [AccessPoint('7B:A0', 2.4, (10.5410, 21.6662), ptx), AccessPoint('7B:A1', 2.4, (10.5410, 21.6662), ptx),
+               AccessPoint('7B:A3', 2.4, (10.5410, 21.6662), ptx), AccessPoint('7B:B0', 5.0, (10.5410, 21.6662), ptx),
+               AccessPoint('7B:B1', 5.0, (10.5410, 21.6662), ptx), AccessPoint('7B:B3', 5.0, (10.5410, 21.6662), ptx)],
 
-        'L1': [AccessPoint('85:E0', 2.4, (0, 0), ptx), AccessPoint('85:E2', 2.4, (0, 0), ptx),
-               AccessPoint('85:E3', 2.4, (0, 0), ptx), AccessPoint('85:F0', 5.0, (0, 0), ptx),
-               AccessPoint('85:F2', 5.0, (0, 0), ptx), AccessPoint('85:F3', 5.0, (0, 0), ptx)],
+        'L1': [AccessPoint('85:E0', 2.4, (0.0, 31.5976), ptx), AccessPoint('85:E2', 2.4, (0.0, 31.5976), ptx),
+               AccessPoint('85:E3', 2.4, (0.0, 31.5976), ptx), AccessPoint('85:F0', 5.0, (0.0, 31.5976), ptx),
+               AccessPoint('85:F2', 5.0, (0.0, 31.5976), ptx), AccessPoint('85:F3', 5.0, (0.0, 31.5976), ptx)],
 
-        'L2': [AccessPoint('7C:00', 2.4, (0, 0), ptx), AccessPoint('7C:01', 2.4, (0, 0), ptx),
-               AccessPoint('7C:03', 2.4, (0, 0), ptx), AccessPoint('7C:10', 5.0, (0, 0), ptx),
-               AccessPoint('7C:11', 5.0, (0, 0), ptx), AccessPoint('7C:13', 5.0, (0, 0), ptx)],
+        'L2': [AccessPoint('7C:00', 2.4, (0.0, 17.0434), ptx), AccessPoint('7C:01', 2.4, (0.0, 17.0434), ptx),
+               AccessPoint('7C:03', 2.4, (0.0, 17.0434), ptx), AccessPoint('7C:10', 5.0, (0.0, 17.0434), ptx),
+               AccessPoint('7C:11', 5.0, (0.0, 17.0434), ptx), AccessPoint('7C:13', 5.0, (0.0, 17.0434), ptx)],
 
-        'S1': [AccessPoint('85:A0', 2.4, (0, 0), ptx), AccessPoint('85:A1', 2.4, (0, 0), ptx),
-               AccessPoint('85:A3', 2.4, (0, 0), ptx), AccessPoint('85:B0', 5.0, (0, 0), ptx),
-               AccessPoint('85:B1', 5.0, (0, 0), ptx), AccessPoint('85:B3', 5.0, (0, 0), ptx)],
+        # CHECK THE MAC ADDRESS FOR S1 AND S2!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        # CHECK THE MAC ADDRESS FOR S1 AND S2!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        # CHECK THE MAC ADDRESS FOR S1 AND S2!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        # CHECK THE MAC ADDRESS FOR S1 AND S2!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        # CHECK THE MAC ADDRESS FOR S1 AND S2# CHECK THE MAC ADDRESS FOR S1 AND S2
+        # CHECK THE MAC ADDRESS FOR S1 AND S2# CHECK THE MAC ADDRESS FOR S1 AND S2
 
-        'S2': [AccessPoint('E1:60', 2.4, (0, 0), ptx), AccessPoint('E1:62', 2.4, (0, 0), ptx),
-               AccessPoint('E1:63', 2.4, (0, 0), ptx), AccessPoint('E1:70', 5.0, (0, 0), ptx),
-               AccessPoint('E1:72', 5.0, (0, 0), ptx), AccessPoint('E1:73', 5.0, (0, 0), ptx)]}
+        'S2': [AccessPoint('85:A0', 2.4, (-5.6896, 21.6281), ptx), AccessPoint('85:A1', 2.4, (-5.6896, 21.6281), ptx),
+               AccessPoint('85:A3', 2.4, (-5.6896, 21.6281), ptx), AccessPoint('85:B0', 5.0, (-5.6896, 21.6281), ptx),
+               AccessPoint('85:B1', 5.0, (-5.6896, 21.6281), ptx), AccessPoint('85:B3', 5.0, (-5.6896, 21.6281), ptx)],
+
+        'S1': [AccessPoint('E1:60', 2.4, (-10.8966, 27.7241), ptx), AccessPoint('E1:62', 2.4, (-10.8966, 27.7241), ptx),
+               AccessPoint('E1:63', 2.4, (-10.8966, 27.7241), ptx), AccessPoint('E1:70', 5.0, (-10.8966, 27.7241), ptx),
+               AccessPoint('E1:72', 5.0, (-10.8966, 27.7241), ptx),
+               AccessPoint('E1:73', 5.0, (-10.8966, 27.7241), ptx)]}
     trilateration = Trilateration()
 
     while True:
@@ -251,9 +274,8 @@ if __name__ == "__main__":
 
         estimated_position_votes = trilateration.get_position_votes(anchor_signal_pos_data, APs_signal_pos_data)
 
-        print("Anchor : ", anchor_signal_pos_data)
-        print("APs : ", APs_signal_pos_data)
-        print("Result : ", estimated_position_votes)
-        # x_coord, y_coord = trilateration.get_position(APs_signal_pos_data)
-        # print("Result : %.4f, %.4f" % (x_coord, y_coord))
+        # print("Anchor : ", anchor_signal_pos_data)
+        # print("APs : ", APs_signal_pos_data)
+        # print("Result : ", estimated_position_votes)
+        print("Outlier filtered result :", get_position(estimated_position_votes))
         break  # for testing purpose
