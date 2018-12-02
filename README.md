@@ -1,3 +1,3 @@
-# FCN-534-Final-Project
-Fundamentals of Computer Networks CSE534 - Final Project
-Indoor Localization Based on Multilateration Algorithm
+# CSE 534 : Fundamentals of Computer Networks
+Final project<br>
+Indoor Localization Based on Multilateration Algorithm<br>
