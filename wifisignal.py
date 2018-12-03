@@ -1,6 +1,7 @@
 import subprocess
-from coordinate import Coordinate2D
 import json
+from coordinate import Coordinate2D
+from readData import get_access_points
 
 
 class Signal:
@@ -26,9 +27,6 @@ class Signal:
     def group(self):
         return self.group
 
-
-# User's perspective
-# For receiving the wifi signal data (receives as JSON format)
 class WifiSignalParse:
     def __init__(self):
         self.signal_list = []
@@ -49,7 +47,20 @@ class WifiSignalParse:
 
     # RECEIVING DATA FROM THE CLIENT as JSON format, and form it into my format
     def receive_data(self):
-        # this part is for testing ------
+        ap_list = get_access_points();
+        for ap in ap_list:
+            self.signal_list.append(Signal(ssid=ap['SSID'], bssid=ap['BSSID'], rssi=ap['RSSI'], group=ap['GROUP']))
+
+        # anchor_signal is the strongest signal among received data
+        # the strongest signal is the first element of the received data (already sorted from client-side)
+        if len(self.signal_list) > 0:
+            self.anchor_signal = self.signal_list[0]
+
+        # the list wihtout the anchor signal (the first signal)
+        if len(self.signal_list) > 1:
+            self.target_signal_list = self.signal_list[1:]
+
+    def receive_data_test(self):
         self.signal_list.append(Signal('Wolfie', 'FC:83', -42, 'H3'))
         self.signal_list.append(Signal('Wolfie', 'FC:93', -42, 'H3'))
         self.signal_list.append(Signal('Wolfie', 'FC:90', -42, 'H3'))
@@ -78,25 +89,5 @@ class WifiSignalParse:
         self.signal_list.append(Signal('Wolfie', '7A:E0', -64, 'H1'))
         self.signal_list.append(Signal('Wolfie', '7A:E3', -64, 'H1'))
 
-
-
-        # -------------------------------
-
-        # anchor_signal is the most the most strongest signal among received data
-        # the most strongest signal is the first element of the received data (already sorted from client-side)
         self.anchor_signal = self.signal_list[0]
-
-        # the list wihtout the anchor signal (the first signal)
         self.target_signal_list = self.signal_list[1:]
-
-        # for each data : loop (for each wifi signal)
-        #     json.loads(last_json)) # CORRECT GRAMMAR ??
-        #     self.signal_list.append(Signal(data['SSID'],data['BSSID'],data['RSSI'], data['GROUP']))
-        pass
-
-    def find_dominant_signal(self, num_of_groups=-1):
-        if num_of_groups == -1:  # use all the wifi signals (not only few('num_of_groups') of them)
-            pass
-        else:  # getting the 'num_of_groups' number of dominant signals
-            pass
-        pass

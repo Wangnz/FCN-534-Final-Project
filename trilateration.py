@@ -154,6 +154,27 @@ class Trilateration:
 
         return np.mean(votes_without_outliers, axis=0)
 
+    def trilaterate(self, wifi_data, ap_map):
+        ptx = estimate_transmit_power()
+        anchor_signal = wifi_data.anchor_signal
+
+        APs_signal_pos_data = []
+        anchor_signal_pos_data = get_pos_data(ap_map, ptx, anchor_signal)
+        for ap in wifi_data.target_signal_list:
+            data = get_pos_data(ap_map, ptx, ap)
+            if data is not None:
+                APs_signal_pos_data.append(data)
+
+        estimated_position_votes = self.get_position_votes(anchor_signal_pos_data, APs_signal_pos_data)
+        
+        router_groups = []
+        limit = 2 if len(wifi_data.target_signal_list) > 2 else len(wifi_data.target_signal_list)
+        for i in xrange(0, limit):
+            router_groups.append(wifi_data.target_signal_list[i].group)
+
+        router_groups.append(anchor_signal.group)
+        return self.get_position(estimated_position_votes), router_groups, estimated_position_votes
+
 
 def get_estimated_distance(transmit_power, rssi):
     k = -27.55
