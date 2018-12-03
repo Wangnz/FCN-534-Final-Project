@@ -40,7 +40,7 @@ def get_filename(timestamp):
 
 
 def as_record_format(ap_data):
-    return "{0:2s} | {1} | {2} | {3}\n".format(ap_data['RSSI'], ap_data['GROUP'], ap_data['BSSID'], ap_data['SSID'])
+    return "{0:2s} {1} {2} {3}\n".format(ap_data['RSSI'], ap_data['GROUP'], ap_data['BSSID'], ap_data['SSID'])
 
 
 def platform_check():
