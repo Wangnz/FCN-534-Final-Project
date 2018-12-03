@@ -120,7 +120,7 @@ def draw_graph(signal_bin_dict, num_of_iter):
     # : -30 meter ~ 32 meter (from the point of origin : H2)
     # measure every 1 meter starting from NCS's very-end-wall (H4-side)
     # x = range(-30, 33) # this is REQUIRED
-    x = np.linspace(-1, 1, num_of_iter + 1)  # THIS IS ONLY FOR TESTING
+    x = np.linspace(-1, 1, num_of_iter)  # THIS IS ONLY FOR TESTING
 
     # !!!!!!!!!!!!!!!!!!!!!!!!!!THE NUMBER OF MEASURED DATA SHOULD BE 63 (= 63 ITERATION)!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     # !!!!!!!!!!!!!!!!!!!!!!!!!!THE NUMBER OF MEASURED DATA SHOULD BE 63 (= 63 ITERATION)!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -148,64 +148,65 @@ def draw_graph(signal_bin_dict, num_of_iter):
 
 
 if __name__ == "__main__":
-    AP_list = {'H1': [AccessPoint('7A:E0', 2.4, (0.0, 9.1440), -1), AccessPoint('7A:E1', 2.4, (0.0, 9.1440), -1),
-                      AccessPoint('7A:E3', 2.4, (0.0, 9.1440), -1), AccessPoint('7A:F0', 5.0, (0.0, 9.1440), -1),
-                      AccessPoint('7A:F1', 5.0, (0.0, 9.1440), -1), AccessPoint('7A:F3', 5.0, (0.0, 9.1440), -1)],
+    AP_list = {
+        'H1': [AccessPoint('7A:E0', 2.4, (0.0, 9.1440), -1), AccessPoint('7A:E1', 2.4, (0.0, 9.1440), -1),
+               AccessPoint('7A:E3', 2.4, (0.0, 9.1440), -1), AccessPoint('7A:F0', 5.0, (0.0, 9.1440), -1),
+               AccessPoint('7A:F1', 5.0, (0.0, 9.1440), -1), AccessPoint('7A:F3', 5.0, (0.0, 9.1440), -1)],
 
-               'H2': [AccessPoint('77:00', 2.4, (0.0, 0.0), -1), AccessPoint('77:01', 2.4, (0.0, 0.0), -1),
-                      AccessPoint('77:03', 2.4, (0.0, 0.0), -1), AccessPoint('77:10', 5.0, (0.0, 0.0), -1),
-                      AccessPoint('77:11', 5.0, (0.0, 0.0), -1), AccessPoint('77:13', 5.0, (0.0, 0.0), -1)],
+        'H2': [AccessPoint('77:00', 2.4, (0.0, 0.0), -1), AccessPoint('77:01', 2.4, (0.0, 0.0), -1),
+               AccessPoint('77:03', 2.4, (0.0, 0.0), -1), AccessPoint('77:10', 5.0, (0.0, 0.0), -1),
+               AccessPoint('77:11', 5.0, (0.0, 0.0), -1), AccessPoint('77:13', 5.0, (0.0, 0.0), -1)],
 
-               'H3': [AccessPoint('FC:80', 2.4, (0.0, -14.6050), -1), AccessPoint('FC:82', 2.4, (0.0, -14.6050), -1),
-                      AccessPoint('FC:83', 2.4, (0.0, -14.6050), -1), AccessPoint('FC:90', 5.0, (0.0, -14.6050), -1),
-                      AccessPoint('FC:92', 5.0, (0.0, -14.6050), -1), AccessPoint('FC:93', 5.0, (0.0, -14.6050), -1)],
+        'H3': [AccessPoint('FC:80', 2.4, (0.0, -14.6050), -1), AccessPoint('FC:82', 2.4, (0.0, -14.6050), -1),
+               AccessPoint('FC:83', 2.4, (0.0, -14.6050), -1), AccessPoint('FC:90', 5.0, (0.0, -14.6050), -1),
+               AccessPoint('FC:92', 5.0, (0.0, -14.6050), -1), AccessPoint('FC:93', 5.0, (0.0, -14.6050), -1)],
 
-               'H4': [AccessPoint('77:60', 2.4, (0.0, -27.4320), -1), AccessPoint('77:61', 2.4, (0.0, -27.4320), -1),
-                      AccessPoint('77:63', 2.4, (0.0, -27.4320), -1), AccessPoint('77:70', 5.0, (0.0, -27.4320), -1),
-                      AccessPoint('77:71', 5.0, (0.0, -27.4320), -1), AccessPoint('77:73', 5.0, (0.0, -27.4320), -1)],
+        'H4': [AccessPoint('77:60', 2.4, (0.0, -27.4320), -1), AccessPoint('77:61', 2.4, (0.0, -27.4320), -1),
+               AccessPoint('77:63', 2.4, (0.0, -27.4320), -1), AccessPoint('77:70', 5.0, (0.0, -27.4320), -1),
+               AccessPoint('77:71', 5.0, (0.0, -27.4320), -1), AccessPoint('77:73', 5.0, (0.0, -27.4320), -1)],
 
-               'P1': [AccessPoint('7A:C0', 2.4, (21.4884, 21.6662), -1),
-                      AccessPoint('7A:C1', 2.4, (21.4884, 21.6662), -1),
-                      AccessPoint('7A:C3', 2.4, (21.4884, 21.6662), -1),
-                      AccessPoint('7A:D0', 5.0, (21.4884, 21.6662), -1),
-                      AccessPoint('7A:D1', 5.0, (21.4884, 21.6662), -1),
-                      AccessPoint('7A:D3', 5.0, (21.4884, 21.6662), -1)],
+        'P1': [AccessPoint('7A:C0', 2.4, (21.4884, 21.6662), -1),
+               AccessPoint('7A:C1', 2.4, (21.4884, 21.6662), -1),
+               AccessPoint('7A:C3', 2.4, (21.4884, 21.6662), -1),
+               AccessPoint('7A:D0', 5.0, (21.4884, 21.6662), -1),
+               AccessPoint('7A:D1', 5.0, (21.4884, 21.6662), -1),
+               AccessPoint('7A:D3', 5.0, (21.4884, 21.6662), -1)],
 
-               'P2': [AccessPoint('7B:A0', 2.4, (10.5410, 21.6662), -1),
-                      AccessPoint('7B:A1', 2.4, (10.5410, 21.6662), -1),
-                      AccessPoint('7B:A3', 2.4, (10.5410, 21.6662), -1),
-                      AccessPoint('7B:B0', 5.0, (10.5410, 21.6662), -1),
-                      AccessPoint('7B:B1', 5.0, (10.5410, 21.6662), -1),
-                      AccessPoint('7B:B3', 5.0, (10.5410, 21.6662), -1)],
+        'P2': [AccessPoint('7B:A0', 2.4, (10.5410, 21.6662), -1),
+               AccessPoint('7B:A1', 2.4, (10.5410, 21.6662), -1),
+               AccessPoint('7B:A3', 2.4, (10.5410, 21.6662), -1),
+               AccessPoint('7B:B0', 5.0, (10.5410, 21.6662), -1),
+               AccessPoint('7B:B1', 5.0, (10.5410, 21.6662), -1),
+               AccessPoint('7B:B3', 5.0, (10.5410, 21.6662), -1)],
 
-               'L1': [AccessPoint('85:E0', 2.4, (0.0, 31.5976), -1), AccessPoint('85:E2', 2.4, (0.0, 31.5976), -1),
-                      AccessPoint('85:E3', 2.4, (0.0, 31.5976), -1), AccessPoint('85:F0', 5.0, (0.0, 31.5976), -1),
-                      AccessPoint('85:F2', 5.0, (0.0, 31.5976), -1), AccessPoint('85:F3', 5.0, (0.0, 31.5976), -1)],
+        'L1': [AccessPoint('85:E0', 2.4, (0.0, 31.5976), -1), AccessPoint('85:E2', 2.4, (0.0, 31.5976), -1),
+               AccessPoint('85:E3', 2.4, (0.0, 31.5976), -1), AccessPoint('85:F0', 5.0, (0.0, 31.5976), -1),
+               AccessPoint('85:F2', 5.0, (0.0, 31.5976), -1), AccessPoint('85:F3', 5.0, (0.0, 31.5976), -1)],
 
-               'L2': [AccessPoint('7C:00', 2.4, (0.0, 17.0434), -1), AccessPoint('7C:01', 2.4, (0.0, 17.0434), -1),
-                      AccessPoint('7C:03', 2.4, (0.0, 17.0434), -1), AccessPoint('7C:10', 5.0, (0.0, 17.0434), -1),
-                      AccessPoint('7C:11', 5.0, (0.0, 17.0434), -1), AccessPoint('7C:13', 5.0, (0.0, 17.0434), -1)],
+        'L2': [AccessPoint('7C:00', 2.4, (0.0, 17.0434), -1), AccessPoint('7C:01', 2.4, (0.0, 17.0434), -1),
+               AccessPoint('7C:03', 2.4, (0.0, 17.0434), -1), AccessPoint('7C:10', 5.0, (0.0, 17.0434), -1),
+               AccessPoint('7C:11', 5.0, (0.0, 17.0434), -1), AccessPoint('7C:13', 5.0, (0.0, 17.0434), -1)],
 
-               # CHECK THE MAC ADDRESS FOR S1 AND S2!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-               # CHECK THE MAC ADDRESS FOR S1 AND S2!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-               # CHECK THE MAC ADDRESS FOR S1 AND S2!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-               # CHECK THE MAC ADDRESS FOR S1 AND S2!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-               # CHECK THE MAC ADDRESS FOR S1 AND S2# CHECK THE MAC ADDRESS FOR S1 AND S2
-               # CHECK THE MAC ADDRESS FOR S1 AND S2# CHECK THE MAC ADDRESS FOR S1 AND S2
+        # CHECK THE MAC ADDRESS FOR S1 AND S2!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        # CHECK THE MAC ADDRESS FOR S1 AND S2!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        # CHECK THE MAC ADDRESS FOR S1 AND S2!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        # CHECK THE MAC ADDRESS FOR S1 AND S2!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        # CHECK THE MAC ADDRESS FOR S1 AND S2# CHECK THE MAC ADDRESS FOR S1 AND S2
+        # CHECK THE MAC ADDRESS FOR S1 AND S2# CHECK THE MAC ADDRESS FOR S1 AND S2
 
-               'S2': [AccessPoint('85:A0', 2.4, (-5.6896, 21.6281), -1),
-                      AccessPoint('85:A1', 2.4, (-5.6896, 21.6281), -1),
-                      AccessPoint('85:A3', 2.4, (-5.6896, 21.6281), -1),
-                      AccessPoint('85:B0', 5.0, (-5.6896, 21.6281), -1),
-                      AccessPoint('85:B1', 5.0, (-5.6896, 21.6281), -1),
-                      AccessPoint('85:B3', 5.0, (-5.6896, 21.6281), -1)],
+        'S2': [AccessPoint('85:A0', 2.4, (-5.6896, 21.6281), -1),
+               AccessPoint('85:A1', 2.4, (-5.6896, 21.6281), -1),
+               AccessPoint('85:A3', 2.4, (-5.6896, 21.6281), -1),
+               AccessPoint('85:B0', 5.0, (-5.6896, 21.6281), -1),
+               AccessPoint('85:B1', 5.0, (-5.6896, 21.6281), -1),
+               AccessPoint('85:B3', 5.0, (-5.6896, 21.6281), -1)],
 
-               'S1': [AccessPoint('E1:60', 2.4, (-10.8966, 27.7241), -1),
-                      AccessPoint('E1:62', 2.4, (-10.8966, 27.7241), -1),
-                      AccessPoint('E1:63', 2.4, (-10.8966, 27.7241), -1),
-                      AccessPoint('E1:70', 5.0, (-10.8966, 27.7241), -1),
-                      AccessPoint('E1:72', 5.0, (-10.8966, 27.7241), -1),
-                      AccessPoint('E1:73', 5.0, (-10.8966, 27.7241), -1)]}
+        'S1': [AccessPoint('E1:60', 2.4, (-10.8966, 27.7241), -1),
+               AccessPoint('E1:62', 2.4, (-10.8966, 27.7241), -1),
+               AccessPoint('E1:63', 2.4, (-10.8966, 27.7241), -1),
+               AccessPoint('E1:70', 5.0, (-10.8966, 27.7241), -1),
+               AccessPoint('E1:72', 5.0, (-10.8966, 27.7241), -1),
+               AccessPoint('E1:73', 5.0, (-10.8966, 27.7241), -1)]}
     directory = './Record/'
     file_name = 'Record(181202_205925)' + '.txt'  # target file_name
     file_dir = directory + file_name
@@ -226,10 +227,12 @@ if __name__ == "__main__":
     with open(file_dir, 'r') as fp:
         for raw_data in fp:  # read data line by line
             if raw_data.startswith('-----'):
+                if is_data == True:
+                    save_avg_signal_SB(signal_bin_dict)  # average each frequency signal
+                    init_sum_SB(signal_bin_dict)  # empty values
+
                 is_data = True
                 num_of_iter = num_of_iter + 1
-                save_avg_signal_SB(signal_bin_dict)  # average each frequency signal
-                init_sum_SB(signal_bin_dict)  # empty values
                 continue
             elif raw_data == 'FINISH':
                 save_avg_signal_SB(signal_bin_dict)  # average each frequency signal
