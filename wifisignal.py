@@ -46,11 +46,25 @@ class WifiSignalParse:
         return self.anchor_signal
 
     # RECEIVING DATA FROM THE CLIENT as JSON format, and form it into my format
-    def receive_data(self):
-        ap_list = get_access_points();
+    def receive_data(self, ap_map):
+        ap_list = get_access_points()
+        grouped = {}
         for ap in ap_list:
-            self.signal_list.append(Signal(ssid=ap['SSID'], bssid=ap['BSSID'], rssi=ap['RSSI'], group=ap['GROUP']))
+            if ap['GROUP'] not in grouped:
+                grouped[ap['GROUP']] = []
 
+            grouped[ap['GROUP']].append(Signal(ssid=ap['SSID'], bssid=ap['BSSID'], rssi=ap['RSSI'], group=ap['GROUP']))
+
+        for group, ap_group in grouped.iteritems():
+            rssi_sum = 0
+            for signal in ap_group:
+                rssi_sum += signal.rssi
+
+            self.signal_list.append(
+                Signal(ssid=signal, bssid=signal.bssid, rssi=rssi_sum / len(ap_group), group=signal.group))
+
+        self.signal_list = sorted(self.signal_list, key=lambda e: e.rssi, reverse=True)
+        print "signals", self.signal_list
         # anchor_signal is the strongest signal among received data
         # the strongest signal is the first element of the received data (already sorted from client-side)
         if len(self.signal_list) > 0:
@@ -58,6 +72,7 @@ class WifiSignalParse:
 
         # the list wihtout the anchor signal (the first signal)
         if len(self.signal_list) > 1:
+            self.target_signal_list = self.signal_list[1:]
             self.target_signal_list = self.signal_list[1:]
 
     def receive_data_test(self):
