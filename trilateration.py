@@ -223,7 +223,7 @@ def estimate_transmit_power():
     # derived from FSPL = 20log(d) + 20log(f) - 27.55
     # Radio frequency transmission -> [Path loss(here using FSPL) = Pt(transmit_power) + G_total(0) - R(rssi)]
     transmit_power = 20.0 * math.log10(dist) + 20.0 * math.log10(freq) + rssi + k
-    transmit_power = 12.5
+    # transmit_power = 12.5
     return transmit_power
 
 
